@@ -1,0 +1,25 @@
+#on: [push, pull_request]
+on:
+  pull_request:
+    paths-ignore:
+      - "README.md"
+name: Test
+jobs:
+  test:
+    strategy:
+      matrix:
+        go-version: [1.16.x, 1.17.x]
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go-version }}
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Set up pubsub emulator
+        run: |
+          docker run --name pubsub-emulator -d -p 8085:8085 -ti google/cloud-sdk:latest gcloud beta emulators pubsub start --host-port 0.0.0.0:8085
+      - name: Test
+        run: go test ./...
